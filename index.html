@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>两人食光 · 三餐日历</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#fdf6ec;
+  --card:#fffaf2;
+  --card-2:#fbf1e2;
+  --ink:#6b4a3a;
+  --ink-2:#a4846f;
+  --line:#f0dfc8;
+  --main:#e08a6a;
+  --main-d:#c96f4a;
+  --main-bg:#fbe7db;
+  --pink:#f5c6c0;
+  --green:#8fae8a;
+  --green-bg:#eaf1e6;
+  --amber:#e8a85c;
+  --amber-bg:#fdf0dc;
+  --shadow:0 6px 24px rgba(190,140,100,.12);
+  --radius:18px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;
+}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+input,textarea{font-family:inherit}
+#app{max-width:640px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:calc(84px + var(--safe-bottom))}
+
+/* ===== 视图 ===== */
+.view{display:none;padding:0 18px;padding-top:calc(16px + var(--safe-top));animation:fadeIn .3s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== 解锁页 ===== */
+#view-lock{min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+#view-lock.active{display:flex}
+.lock-card{width:min(420px,100%);background:var(--card);border-radius:26px;box-shadow:var(--shadow);padding:38px 30px;border:1px solid rgba(255,255,255,.7)}
+.lock-heart{width:66px;height:66px;margin:0 auto 16px;background:linear-gradient(135deg,#f7b7a9,#e08a6a);border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(224,138,106,.4)}
+.lock-heart svg{width:32px;height:32px;color:#fff}
+.lock-title{font-size:26px;font-weight:800;letter-spacing:4px;color:var(--ink)}
+.lock-sub{font-size:13px;color:var(--ink-2);margin:8px 0 26px;letter-spacing:2px}
+.lock-input{
+  width:100%;padding:15px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);
+  font-size:17px;color:var(--ink);text-align:center;letter-spacing:6px;outline:none;transition:border-color .2s;
+}
+.lock-input:focus{border-color:var(--main)}
+.lock-btn{
+  width:100%;padding:16px;border-radius:14px;margin-top:14px;font-size:16px;font-weight:700;letter-spacing:3px;
+  background:linear-gradient(135deg,#e89a7c,#d97b55);color:#fff;box-shadow:0 8px 22px rgba(224,138,106,.4);
+  transition:transform .12s;
+}
+.lock-btn:active{transform:scale(.97)}
+.lock-hint{font-size:12px;color:var(--ink-2);margin-top:16px;line-height:1.8}
+.lock-err{color:#d97b55;font-size:13px;margin-top:12px;min-height:20px}
+.lock-setup{
+  margin-top:18px;padding:9px 20px;border-radius:30px;background:var(--bg);border:1.5px solid var(--line);
+  color:var(--ink-2);font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;margin-left:auto;margin-right:auto;
+}
+.lock-setup svg{width:15px;height:15px}
+.lock-setup:active{transform:scale(.95)}
+
+/* ===== 顶部栏 ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.topbar .brand{display:flex;align-items:center;gap:10px}
+.topbar .brand .logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#f7b7a9,#e08a6a);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(224,138,106,.35)}
+.topbar .brand .logo svg{width:20px;height:20px;color:#fff}
+.topbar .brand .t{font-size:19px;font-weight:800;letter-spacing:2px}
+.topbar .brand .s{font-size:11px;color:var(--ink-2);letter-spacing:1px}
+.topbar .tools{display:flex;gap:8px}
+.icon-btn{width:42px;height:42px;border-radius:13px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;color:var(--main);transition:transform .12s}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.muted{opacity:.5}
+
+/* ===== 月份导航 ===== */
+.month-nav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 8px;margin-bottom:14px}
+.month-nav .mv{width:44px;height:44px;border-radius:13px;background:var(--main-bg);color:var(--main-d);font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.month-nav .mv:active{transform:scale(.9)}
+.month-nav .cur{font-size:20px;font-weight:800;letter-spacing:2px;color:var(--ink)}
+.month-nav .cur .y{font-size:12px;color:var(--ink-2);font-weight:600;display:block;text-align:center;letter-spacing:3px;margin-bottom:2px}
+
+/* ===== 日历 ===== */
+.cal-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 12px 20px}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:8px}
+.cal-week span{text-align:center;font-size:12px;font-weight:700;color:var(--ink-2);padding:4px 0;letter-spacing:1px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{
+  position:relative;aspect-ratio:1/.92;border-radius:14px;background:var(--bg);padding:6px 4px 4px;
+  display:flex;flex-direction:column;align-items:center;cursor:pointer;border:1.5px solid transparent;transition:transform .1s, border-color .15s;
+}
+.day:active{transform:scale(.95)}
+.day .num{font-size:15px;font-weight:800;color:var(--ink)}
+.day.blank{background:transparent;cursor:default;border-color:transparent}
+.day.blank:active{transform:none}
+.day.today{border-color:var(--main)}
+.day.today .num{color:var(--main-d)}
+.day.today::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--main)}
+.day .meals{display:flex;gap:4px;margin-top:5px}
+.day .meals i{width:9px;height:9px;border-radius:50%;background:#ead9c4;transition:background .2s}
+.day .meals i.on-b{background:var(--amber)}
+.day .meals i.on-l{background:var(--green)}
+.day .meals i.on-d{background:var(--main)}
+.day .food-preview{font-size:9.5px;color:var(--ink-2);margin-top:3px;width:100%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.day .food-preview.rest{color:#cbb7a2;letter-spacing:0}
+.day .note-badge{
+  position:absolute;bottom:5px;right:6px;width:8px;height:8px;border-radius:50%;
+  background:#e08a6a;box-shadow:0 0 0 2px var(--card);
+}
+
+/* ===== 底部操作条 ===== */
+.bottom-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;z-index:30;
+  background:rgba(253,246,236,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:10px 18px;padding-bottom:calc(10px + var(--safe-bottom));
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+}
+.bottom-bar .bb-btn{
+  padding:12px 6px;border-radius:13px;background:var(--card);box-shadow:var(--shadow);font-size:13px;font-weight:700;color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;gap:3px;transition:transform .12s;
+}
+.bottom-bar .bb-btn:active{transform:scale(.94)}
+.bottom-bar .bb-btn svg{width:19px;height:19px;color:var(--main)}
+.bottom-bar .bb-btn .lbl{font-size:11px;color:var(--ink-2);font-weight:600}
+
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(107,74,58,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal-mask.show{display:flex}
+.modal{
+  background:var(--card);border-radius:24px 24px 0 0;width:100%;max-width:640px;padding:22px 22px calc(22px + var(--safe-bottom));
+  animation:slideUp .28s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.modal .m-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal .m-title{font-size:19px;font-weight:800;letter-spacing:1px}
+.modal .m-close{width:38px;height:38px;border-radius:12px;background:var(--bg);color:var(--ink-2);font-size:18px;display:flex;align-items:center;justify-content:center}
+.meal-row{
+  background:var(--bg);border-radius:16px;padding:14px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;
+}
+.meal-row .m-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.meal-row .m-name{font-size:16px;font-weight:700;min-width:44px}
+.meal-row .m-sub{font-size:11px;color:var(--ink-2);margin-top:1px}
+.meal-row .m-input{flex:1;min-width:0}
+.meal-row input{
+  width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:15px;color:var(--ink);outline:none;
+}
+.meal-row input:focus{border-color:var(--main)}
+.toggle{width:52px;height:30px;border-radius:20px;background:#e6d6c0;position:relative;transition:background .25s;flex-shrink:0}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);transition:left .25s}
+.toggle.on{background:var(--main)}
+.toggle.on::after{left:25px}
+
+/* ===== 留言板 ===== */
+#modalDay .modal{max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.note-box{background:var(--bg);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.note-head{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:baseline;gap:8px}
+.note-tip{font-size:11px;color:var(--ink-2);font-weight:500}
+.note-list{max-height:200px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.note-empty{font-size:12.5px;color:var(--ink-2);text-align:center;padding:14px 0}
+.note-item{
+  position:relative;background:var(--card);border-radius:12px;padding:9px 30px 9px 12px;
+  border:1px solid var(--line);
+}
+.note-item .note-meta{font-size:11px;color:var(--main-d);font-weight:700;margin-bottom:3px}
+.note-item .note-text{font-size:14px;color:var(--ink);line-height:1.5;word-break:break-word}
+.note-item .note-del{
+  position:absolute;top:7px;right:8px;width:22px;height:22px;border-radius:8px;
+  background:transparent;color:var(--ink-2);font-size:14px;display:flex;align-items:center;justify-content:center;
+}
+.note-item .note-del:active{background:var(--line)}
+.note-input{display:flex;gap:8px}
+.note-input input{
+  flex:1;min-width:0;border:1.5px solid var(--line);background:var(--card);border-radius:12px;
+  padding:10px 13px;font-size:15px;color:var(--ink);outline:none;transition:border-color .2s;
+}
+.note-input input:focus{border-color:var(--main)}
+.note-input button{
+  flex-shrink:0;padding:0 18px;border-radius:12px;background:linear-gradient(135deg,#e89a7c,#d97b55);
+  color:#fff;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(224,138,106,.35);
+}
+.note-input button:active{transform:scale(.95)}
+.modal .m-save{width:100%;padding:16px;border-radius:14px;margin-top:6px;font-size:16px;font-weight:700;letter-spacing:3px;background:linear-gradient(135deg,#e89a7c,#d97b55);color:#fff;box-shadow:0 8px 22px rgba(224,138,106,.35)}
+.modal .m-save:active{transform:scale(.98)}
+
+/* ===== 文件/密码弹窗 ===== */
+.file-note{font-size:13px;color:var(--ink-2);background:var(--bg);border-radius:14px;padding:13px 16px;margin-bottom:14px;line-height:1.8}
+.pw-row{margin-bottom:12px}
+.pw-row .pw-label{font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:6px;display:block}
+.pw-row input{
+  width:100%;padding:14px 16px;border-radius:13px;border:1.5px solid var(--line);background:var(--bg);font-size:16px;color:var(--ink);outline:none;letter-spacing:2px;
+}
+.pw-row input:focus{border-color:var(--main)}
+.duo-btn{display:flex;gap:10px;margin-top:6px}
+.duo-btn .half{flex:1;padding:14px;border-radius:13px;font-size:15px;font-weight:700;letter-spacing:2px}
+.duo-btn .half.ok{background:linear-gradient(135deg,#e89a7c,#d97b55);color:#fff}
+.duo-btn .half.no{background:var(--bg);color:var(--ink-2)}
+
+/* ===== 关于 ===== */
+.about-txt{font-size:14px;color:var(--ink-2);line-height:2;background:var(--bg);border-radius:14px;padding:16px 18px}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:calc(70px + var(--safe-top));left:50%;transform:translateX(-50%) translateY(-12px);background:rgba(107,74,58,.94);color:#fff;padding:11px 24px;border-radius:30px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:99;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== 解锁页 ===== -->
+  <section class="view" id="view-lock">
+    <div class="lock-card">
+      <div class="lock-heart">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.9-10-9.4C.4 8.3 2.2 4.5 5.7 4c2-.3 4 .7 5.3 2.4h2C14.3 4.7 16.3 3.7 18.3 4c3.5.5 5.3 4.3 3.7 7.6C19.5 16.1 12 21 12 21z"/></svg>
+      </div>
+      <div class="lock-title">两人食光</div>
+      <div class="lock-sub" id="lockModeText">输入密码，打开我们的小食堂</div>
+      <input class="lock-input" id="lockInput" type="password" placeholder="数据密码" autocomplete="off">
+      <button class="lock-btn" id="lockBtn">解锁</button>
+      <div class="lock-err" id="lockErr"></div>
+      <div class="lock-hint" id="lockHint">首次使用请先设置密码<br>密码用于加密三餐数据，请务必牢记</div>
+      <button class="lock-setup" id="btnGhSetup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        配置云端仓库
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== 主界面 ===== -->
+  <section class="view" id="view-main">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c2.5-6 5-9.5 8-9.5S17.5 14 20 20"/><circle cx="12" cy="6.5" r="2.5"/></svg></div>
+        <div><div class="t">两人食光</div><div class="s">今天想吃什么？</div></div>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" id="btnMusic" title="背景音乐">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+        <button class="icon-btn" id="btnLockOut" title="锁定">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="month-nav">
+      <button class="mv" id="btnPrevMonth">‹</button>
+      <div class="cur"><span class="y" id="curYear">2026 年</span><span id="curMonth">9 月</span></div>
+      <button class="mv" id="btnNextMonth">›</button>
+    </div>
+
+    <div class="cal-card">
+      <div class="cal-week">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===== 日期详情弹窗 ===== -->
+  <div class="modal-mask" id="modalDay">
+    <div class="modal">
+      <div class="m-head">
+        <div class="m-title" id="dayTitle">9月21日 周一</div>
+        <button class="m-close" id="dayClose">×</button>
+      </div>
+      <div class="meal-row">
+        <span class="m-dot" style="background:var(--amber)"></span>
+        <div style="flex:0 0 64px"><div class="m-name">早餐</div><div class="m-sub" id="subB">未安排</div></div>
+        <div class="m-input"><input id="inpB" type="text" placeholder="想吃什么？"></div>
+        <div class="toggle" id="tgB" data-meal="breakfast"></div>
+      </div>
+      <div class="meal-row">
+        <span class="m-dot" style="background:var(--green)"></span>
+        <div style="flex:0 0 64px"><div class="m-name">午餐</div><div class="m-sub" id="subL">未安排</div></div>
+        <div class="m-input"><input id="inpL" type="text" placeholder="想吃什么？"></div>
+        <div class="toggle" id="tgL" data-meal="lunch"></div>
+      </div>
+      <div class="meal-row">
+        <span class="m-dot" style="background:var(--main)"></span>
+        <div style="flex:0 0 64px"><div class="m-name">晚餐</div><div class="m-sub" id="subD">未安排</div></div>
+        <div class="m-input"><input id="inpD" type="text" placeholder="想吃什么？"></div>
+        <div class="toggle" id="tgD" data-meal="dinner"></div>
+      </div>
+
+      <div class="note-box">
+        <div class="note-head">留言板 <span class="note-tip">给TA留句话，看到就会回复</span></div>
+        <div class="note-list" id="noteList"></div>
+        <div class="note-input">
+          <input id="noteInput" type="text" placeholder="写一句给TA的话…" maxlength="100">
+          <button id="noteSend">发送</button>
+        </div>
+      </div>
+
+      <button class="m-save" id="daySave">保存这一天</button>
+    </div>
+  </div>
+
+  <!-- ===== 云端同步弹窗 ===== -->
+  <div class="modal-mask" id="modalFiles">
+    <div class="modal">
+      <div class="m-head">
+        <div class="m-title">云端同步</div>
+        <button class="m-close" id="filesClose">×</button>
+      </div>
+      <div class="file-note" id="filesNote"></div>
+      <div class="file-note" style="background:var(--green-bg);color:#5c7a56" id="syncStatus">检查云端…</div>
+      <div class="file-note" style="background:var(--main-bg);color:var(--main-d)" id="ghState">仓库：未配置</div>
+      <button class="m-save" id="btnGhOpen" style="background:var(--bg);color:var(--ink)">配置云端仓库</button>
+      <div style="height:10px"></div>
+      <div class="pw-row" style="margin-top:8px"><label class="pw-label">我的称呼</label><input id="nickInput" placeholder="如：老公 / 老婆" maxlength="8"></div>
+      <button class="m-save" id="nickSave" style="background:var(--bg);color:var(--ink)">保存称呼</button>
+      <div style="height:10px"></div>
+      <button class="m-save" id="btnExport" style="background:linear-gradient(135deg,#9db88f,#7da076)">导出本月备份文件</button>
+      <div style="height:10px"></div>
+      <button class="m-save" id="btnPw" style="background:var(--bg);color:var(--ink)">修改数据密码</button>
+    </div>
+  </div>
+
+  <!-- ===== 云端仓库配置弹窗 ===== -->
+  <div class="modal-mask" id="modalGh">
+    <div class="modal">
+      <div class="m-head">
+        <div class="m-title">配置云端仓库</div>
+        <button class="m-close" id="ghClose">×</button>
+      </div>
+      <div class="file-note">数据将加密后以独立文件形式存进你的 GitHub 仓库 <b>data/</b> 目录（如 <b>data/2026-09.json</b>），保存即更新文件。密码库存为 <b>data/vault.json</b>，同样加密。</div>
+      <div class="pw-row"><label class="pw-label">GitHub 用户名 / 组织</label><input id="ghOwner" placeholder="如：zhangsan" autocomplete="off"></div>
+      <div class="pw-row"><label class="pw-label">仓库名</label><input id="ghRepo" placeholder="如：couple-meals（不含 .git）" autocomplete="off"></div>
+      <div class="pw-row"><label class="pw-label">分支</label><input id="ghBranch" placeholder="main" autocomplete="off"></div>
+      <div class="pw-row"><label class="pw-label">访问令牌（Token）</label><input id="ghToken" type="password" placeholder="ghp_... 或 github_pat_..." autocomplete="off"></div>
+      <button class="m-save" id="ghSave" style="background:linear-gradient(135deg,#9db88f,#7da076)">保存并测试连接</button>
+      <div class="lock-err" id="ghErr" style="margin:10px 0 0"></div>
+    </div>
+  </div>
+
+  <!-- ===== 修改密码弹窗 ===== -->
+  <div class="modal-mask" id="modalPw">
+    <div class="modal">
+      <div class="m-head">
+        <div class="m-title">修改数据密码</div>
+        <button class="m-close" id="pwClose">×</button>
+      </div>
+      <div class="pw-row"><label class="pw-label">当前密码</label><input id="pwOld" type="password" placeholder="输入当前密码"></div>
+      <div class="pw-row"><label class="pw-label">新密码</label><input id="pwNew" type="password" placeholder="输入新密码（至少 4 位）"></div>
+      <div class="pw-row"><label class="pw-label">确认新密码</label><input id="pwNew2" type="password" placeholder="再次输入新密码"></div>
+      <div class="lock-err" id="pwErr" style="margin:0 0 10px"></div>
+      <div class="duo-btn">
+        <button class="half no" id="pwCancel">取消</button>
+        <button class="half ok" id="pwOk">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 关于 ===== -->
+  <div class="modal-mask" id="modalAbout">
+    <div class="modal">
+      <div class="m-head">
+        <div class="m-title">关于两人食光</div>
+        <button class="m-close" id="aboutClose">×</button>
+      </div>
+      <div class="about-txt">
+        每一天，都有一个人在等另一半问："今天想吃什么？"<br>
+        这个小小的日历，帮你们记下每一餐的约定：谁负责做、想吃点什么，一眼看清。<br><br>
+        · 数据加密后以独立文件存进你的 GitHub 仓库 data/ 目录，保存即更新<br>
+        · 密码是唯一钥匙，仓库里只有密文，没有密码谁也打不开<br>
+        · 背景音乐为温柔合成钢琴，可随时关闭<br>
+        · 提供本月备份下载，重要数据双重保险
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-bar" id="mainBar" style="display:none">
+  <button class="bb-btn" id="btnFiles">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="m5.6 5.6 2.1 2.1"/><path d="m16.3 16.3 2.1 2.1"/><path d="m18.4 5.6-2.1 2.1"/><path d="m7.7 16.3-2.1 2.1"/><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/></svg>
+    <span class="lbl">云端同步</span>
+  </button>
+  <button class="bb-btn" id="btnAbout">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <span class="lbl">关于</span>
+  </button>
+  <button class="bb-btn" id="btnToday">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+    <span class="lbl">回到今天</span>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ================= 工具 ================= */
+function $(id){ return document.getElementById(id); }
+function showToast(msg){
+  var t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+function b64(buf){ return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function unb64(s){ var bin = atob(s), arr = new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); return arr; }
+function pad2(n){ return (n<10?'0':'')+n; }
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+}
+function weekDayName(y, m, day){
+  var names = ['周日','周一','周二','周三','周四','周五','周六'];
+  return names[new Date(y, m-1, day).getDay()];
+}
+
+/* ================= 加密（Web Crypto） ================= */
+var VAULT_KEY = 'cc_vault';
+var MUTE_KEY = 'cc_muted';
+var PBKDF2_ITER = 120000;
+
+var cryptoObj = window.crypto || window.msCrypto;
+
+function getStore(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function setStore(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+
+async function derivePassKey(password, salt){
+  var enc = new TextEncoder();
+  var base = await cryptoObj.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return cryptoObj.subtle.deriveKey(
+    { name:'PBKDF2', salt: salt, iterations: PBKDF2_ITER, hash:'SHA-256' },
+    base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function genMasterKey(){ return cryptoObj.subtle.generateKey({name:'AES-GCM', length:256}, true, ['encrypt','decrypt']); }
+async function wrapMaster(masterKey, passKey){
+  var iv = cryptoObj.getRandomValues(new Uint8Array(12));
+  var raw = await cryptoObj.subtle.exportKey('raw', masterKey);
+  var ct = await cryptoObj.subtle.encrypt({name:'AES-GCM', iv: iv}, passKey, raw);
+  return { iv: b64(iv), ct: b64(ct) };
+}
+async function unwrapMaster(vault, passKey){
+  var iv = unb64(vault.wrapped.iv), ct = unb64(vault.wrapped.ct);
+  var raw = await cryptoObj.subtle.decrypt({name:'AES-GCM', iv: iv}, passKey, ct);
+  return cryptoObj.subtle.importKey('raw', raw, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+}
+async function encData(masterKey, obj){
+  var iv = cryptoObj.getRandomValues(new Uint8Array(12));
+  var plain = new TextEncoder().encode(JSON.stringify(obj));
+  var ct = await cryptoObj.subtle.encrypt({name:'AES-GCM', iv: iv}, masterKey, plain);
+  return { iv: b64(iv), ct: b64(ct) };
+}
+async function decData(masterKey, block){
+  var iv = unb64(block.iv), ct = unb64(block.ct);
+  var plain = await cryptoObj.subtle.decrypt({name:'AES-GCM', iv: iv}, masterKey, ct);
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+/* ================= 会话 ================= */
+var session = { masterKey: null, password: '', month: '', today: todayStr(), busy: false };
+
+function hasVault(){ return !!getStore(VAULT_KEY); }
+
+/* ================= 视图 ================= */
+function showView(id){
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  $('view-' + id).classList.add('active');
+  $('mainBar').style.display = (id === 'main') ? 'grid' : 'none';
+}
+function openModal(id){ $(id).classList.add('show'); }
+function closeModal(id){ $(id).classList.remove('show'); }
+
+/* ================= 云端仓库（GitHub 文件存储） ================= */
+// 默认使用 GitHub 官方 API；支持通过 localStorage 覆盖（如内网代理场景）
+var GH_API = (function(){
+  try{ return localStorage.getItem('cc_gh_api') || 'https://api.github.com'; }
+  catch(e){ return 'https://api.github.com'; }
+})();
+
+function ghConfig(){
+  try{ return JSON.parse(localStorage.getItem('cc_gh') || '{}'); }catch(e){ return {}; }
+}
+function saveGhConfig(c){ try{ localStorage.setItem('cc_gh', JSON.stringify(c)); }catch(e){} }
+function ghConfigured(){
+  var c = ghConfig();
+  return !!(c.owner && c.repo && c.token);
+}
+function ghHeaders(cfg){
+  return {
+    'Authorization': 'Bearer ' + (cfg.token || ''),
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+
+// 读取仓库 data/ 下的文件，返回 { content, sha }；文件不存在返回 null
+async function ghRead(name){
+  var cfg = ghConfig();
+  if(!cfg.owner || !cfg.repo) throw new Error('未配置仓库');
+  var url = GH_API + '/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo) + '/contents/' + name;
+  var res = await fetch(url, { headers: ghHeaders(cfg), cache: 'no-store' });
+  if(res.status === 404) return null;
+  if(!res.ok) throw new Error('读取失败(' + res.status + ')');
+  var j = await res.json();
+  var content;
+  try{ content = decodeURIComponent(escape(atob(j.content.replace(/\n/g,'')))); }
+  catch(e){ content = atob(j.content.replace(/\n/g,'')); }
+  return { content: content, sha: j.sha };
+}
+
+// 写入仓库 data/ 下的文件（新文件或带 sha 更新），内容为加密后的 ASCII 密文
+async function ghWrite(name, content){
+  var cfg = ghConfig();
+  if(!cfg.owner || !cfg.repo || !cfg.token) throw new Error('未配置仓库');
+  var url = GH_API + '/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo) + '/contents/' + name;
+  var existing = null;
+  try{ existing = await ghRead(name); }catch(e){}
+  var body = {
+    message: '两人食光：更新 ' + name,
+    content: btoa(unescape(encodeURIComponent(content)))
+  };
+  if(existing && existing.sha) body.sha = existing.sha;
+  var res = await fetch(url, {
+    method: 'PUT',
+    headers: ghHeaders(cfg),
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error('写入失败(' + res.status + ')');
+  return true;
+}
+
+function updateGhState(){
+  var st = $('ghState');
+  if(!st) return;
+  var cfg = ghConfig();
+  st.textContent = ghConfigured() ? ('仓库：' + cfg.owner + '/' + cfg.repo + ' · ' + (cfg.branch || 'main')) : '仓库：未配置（数据仅存本机）';
+}
+
+/* ================= 解锁 / 设置密码 ================= */
+var pendingVault = null;
+
+async function initLock(){
+  // 本地优先展示，同时尝试从仓库拉 vault（改密码后各设备保持一致）
+  var local = getStore(VAULT_KEY);
+  if(ghConfigured()){
+    try{
+      var f = await ghRead('data/vault.json');
+      if(f){
+        var obj = JSON.parse(f.content);
+        if(obj && obj.salt && obj.wrapped && obj.wrapped.iv && obj.wrapped.ct){
+          pendingVault = f.content;
+          setStore(VAULT_KEY, f.content);   // 同步到本地，离线也能解锁
+        }
+      }
+    }catch(e){ /* 离线则用本地 */ }
+  }
+  updateGhState();
+  renderLockMode();
+}
+
+function syncVault(){
+  var v = getStore(VAULT_KEY);
+  if(!v) return;
+  if(!ghConfigured()){ markPending('vault'); return; }
+  ghWrite('data/vault.json', v).then(function(){
+    removePending('vault');
+  }).catch(function(){
+    markPending('vault');
+  });
+}
+
+function renderLockMode(){
+  if(hasVault()){
+    $('lockModeText').textContent = '输入密码，打开我们的小食堂';
+    $('lockBtn').textContent = '解锁';
+    $('lockHint').innerHTML = '密码是你们小食堂的钥匙<br>输入错误会提示，请回忆一下';
+  } else {
+    $('lockModeText').textContent = '第一次见面，先设置一把钥匙';
+    $('lockBtn').textContent = '设置密码并进入';
+    $('lockHint').innerHTML = '密码会用来加密你们的三餐数据<br>请设置一个记得住、别人猜不到的密码';
+  }
+  $('lockInput').value = '';
+  $('lockErr').textContent = '';
+  $('lockInput').focus();
+}
+
+$('lockInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('lockBtn').click(); });
+
+$('lockBtn').onclick = async function(){
+  if(session.busy) return;
+  var pwd = $('lockInput').value;
+  if(!pwd){ $('lockErr').textContent = '请输入密码'; return; }
+  if(pwd.length < 4 && !hasVault()){ $('lockErr').textContent = '密码至少 4 位'; return; }
+  session.busy = true;
+  $('lockBtn').textContent = '请稍候…';
+  try{
+    if(!hasVault()){
+      // 首次：生成主密钥 + 随机盐
+      var salt = cryptoObj.getRandomValues(new Uint8Array(16));
+      var masterKey = await genMasterKey();
+      var passKey = await derivePassKey(pwd, salt);
+      var wrapped = await wrapMaster(masterKey, passKey);
+      setStore(VAULT_KEY, JSON.stringify({ salt: b64(salt), wrapped: wrapped }));
+      syncVault();   // 密码库同步到云端，换设备可用
+      session.masterKey = masterKey;
+      session.password = pwd;
+      showToast('钥匙已配好，欢迎回家');
+      enterMain();
+    } else {
+      // 解锁：解包主密钥（失败即密码错误）
+      var vault = JSON.parse(getStore(VAULT_KEY));
+      var salt = unb64(vault.salt);
+      var passKey = await derivePassKey(pwd, salt);
+      var masterKey = await unwrapMaster(vault, passKey);
+      session.masterKey = masterKey;
+      session.password = pwd;
+      enterMain();
+    }
+  } catch(e){
+    $('lockErr').textContent = '密码不对，再想想';
+  }
+  session.busy = false;
+  $('lockBtn').textContent = hasVault() ? '解锁' : '设置密码并进入';
+};
+
+function enterMain(){
+  session.month = session.today.slice(0, 7);
+  showView('main');
+  renderMonthLabel();
+  loadAndRender();
+  musicResume();
+}
+
+/* ================= 月度数据（服务器按月存储） ================= */
+function emptyMonth(ym){
+  return { month: ym, updatedAt: Date.now(), days: {} };
+}
+function cacheKey(ym){ return 'cc_cache_' + ym; }
+
+async function loadMonth(ym){
+  // 先读本地缓存（断网也可看），再从仓库拉文件覆盖
+  var cached = getStore(cacheKey(ym));
+  var cacheData = null;
+  if(cached){
+    try{ cacheData = await decData(session.masterKey, JSON.parse(cached)); }
+    catch(e){ cacheData = null; }
+  }
+  if(ghConfigured()){
+    try{
+      var f = await ghRead('data/' + ym + '.json');
+      if(f){
+        var data = await decData(session.masterKey, JSON.parse(f.content));
+        setStore(cacheKey(ym), f.content);
+        return data;
+      }
+    }catch(e){ /* 网络异常走缓存 */ }
+  }
+  if(cacheData) return cacheData;
+  return emptyMonth(ym);
+}
+
+async function saveMonth(ym, obj){
+  obj.updatedAt = Date.now();
+  var block = await encData(session.masterKey, obj);
+  var text = JSON.stringify(block);
+  setStore(cacheKey(ym), text);   // 本地兜底缓存
+  if(!ghConfigured()){
+    markPending(ym);
+    showToast('未配置云端仓库，数据已留在本机');
+    return false;
+  }
+  try{
+    await ghWrite('data/' + ym + '.json', text);
+    removePending(ym);
+    return true;
+  }catch(e){
+    markPending(ym);
+    showToast('云端保存失败，数据已留在本机，联网后自动补传');
+    return false;
+  }
+}
+
+/* ---- 待同步队列：断网时先存本地，联网后自动补传 ---- */
+function getPending(){
+  try{ return JSON.parse(localStorage.getItem('cc_pending') || '[]'); }catch(e){ return []; }
+}
+function setPending(list){ try{ localStorage.setItem('cc_pending', JSON.stringify(list)); }catch(e){} }
+function markPending(ym){
+  var list = getPending();
+  if(list.indexOf(ym) < 0){ list.push(ym); setPending(list); }
+}
+function removePending(ym){
+  var list = getPending();
+  if(list.indexOf(ym) >= 0){ list.splice(list.indexOf(ym), 1); setPending(list); }
+}
+
+async function flushPending(){
+  var list = getPending();
+  if(!list.length) return false;
+  var remain = [];
+  for(var i=0;i<list.length;i++){
+    var item = list[i];
+    try{
+      if(item === 'vault'){
+        var v = getStore(VAULT_KEY);
+        if(v){ await ghWrite('data/vault.json', v); continue; }
+      } else {
+        var text = getStore(cacheKey(item));
+        if(text){ await ghWrite('data/' + item + '.json', text); continue; }
+      }
+    }catch(e){}
+    remain.push(ym);
+  }
+  setPending(remain);
+  if(remain.length < list.length){
+    showToast('离线保存的数据已同步到云端');
+    return true;
+  }
+  return false;
+}
+
+/* ================= 日历渲染 ================= */
+function defaultMeals(dateStr){
+  // 默认作息：工作日早、晚准备，午饭不准备；周末（节假日）三餐都准备
+  var y = parseInt(dateStr.slice(0,4),10), m = parseInt(dateStr.slice(5,7),10), d = parseInt(dateStr.slice(8,10),10);
+  var wd = new Date(y, m-1, d).getDay();
+  var weekend = (wd === 0 || wd === 6);
+  return { breakfast: true, lunch: weekend, dinner: true };
+}
+
+function renderMonthLabel(){
+  var y = parseInt(session.month.slice(0,4),10), m = parseInt(session.month.slice(5,7),10);
+  $('curYear').textContent = y + ' 年';
+  $('curMonth').textContent = m + ' 月';
+}
+
+function renderCalendar(monthData){
+  var y = parseInt(session.month.slice(0,4),10), m = parseInt(session.month.slice(5,7),10);
+  var grid = $('calGrid');
+  grid.innerHTML = '';
+  var firstDow = (new Date(y, m-1, 1).getDay() + 6) % 7;  // 周一=0
+  var daysInMonth = new Date(y, m, 0).getDate();
+  var cells = [];
+  for(var i=0;i<firstDow;i++) cells.push(null);
+  for(var d=1;d<=daysInMonth;d++) cells.push(d);
+  while(cells.length % 7 !== 0) cells.push(null);
+
+  cells.forEach(function(d){
+    var cell = document.createElement('div');
+    if(!d){ cell.className = 'day blank'; grid.appendChild(cell); return; }
+    var dateStr = session.month + '-' + pad2(d);
+    var rec = monthData.days[dateStr] || null;
+    var meals = (rec && rec.meals) ? rec.meals : defaultMeals(dateStr);
+    var hasMeals = rec && rec.meals && (rec.meals.breakfast || rec.meals.lunch || rec.meals.dinner);
+    var hasFood = rec && rec.foods && (rec.foods.breakfast || rec.foods.lunch || rec.foods.dinner);
+    var isToday = (dateStr === session.today);
+    var hasNote = rec && rec.notes && rec.notes.length > 0;
+
+    cell.className = 'day' + (isToday ? ' today' : '');
+    var mealsHtml = '<div class="meals">' +
+      '<i class="' + (meals.breakfast ? 'on-b' : '') + '"></i>' +
+      '<i class="' + (meals.lunch ? 'on-l' : '') + '"></i>' +
+      '<i class="' + (meals.dinner ? 'on-d' : '') + '"></i>' +
+    '</div>';
+    var preview = '';
+    if(hasFood){
+      var foods = rec.foods;
+      var firstFood = foods.breakfast || foods.lunch || foods.dinner;
+      preview = '<div class="food-preview">' + escapeHtml(firstFood) + '</div>';
+    } else if(rec && !hasMeals && !hasFood){
+      preview = '<div class="food-preview rest">休息日</div>';
+    }
+    var noteBadge = hasNote ? '<div class="note-badge"></div>' : '';
+    cell.innerHTML = '<div class="num">' + d + '</div>' + mealsHtml + preview + noteBadge;
+    cell.onclick = function(){ openDayModal(dateStr, monthData); };
+    grid.appendChild(cell);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadAndRender(){
+  var data = await loadMonth(session.month);
+  session.monthData = data;
+  renderCalendar(data);
+  flushPending();   // 网络可用时自动补传离线数据
+}
+
+/* ================= 月份切换 ================= */
+function shiftMonth(delta){
+  var y = parseInt(session.month.slice(0,4),10), m = parseInt(session.month.slice(5,7),10);
+  var d = new Date(y, m-1+delta, 1);
+  session.month = d.getFullYear() + '-' + pad2(d.getMonth()+1);
+  renderMonthLabel();
+  loadAndRender();
+}
+$('btnPrevMonth').onclick = function(){ shiftMonth(-1); };
+$('btnNextMonth').onclick = function(){ shiftMonth(1); };
+$('btnToday').onclick = function(){
+  session.month = session.today.slice(0,7);
+  renderMonthLabel();
+  loadAndRender();
+  showToast('已回到本月');
+};
+
+/* ================= 日期详情 ================= */
+var dayEditing = null;
+var MEAL_META = {
+  breakfast: { dot:'var(--amber)', name:'早餐' },
+  lunch: { dot:'var(--green)', name:'午餐' },
+  dinner: { dot:'var(--main)', name:'晚餐' }
+};
+var MEAL_KEY = { breakfast:'B', lunch:'L', dinner:'D' };
+
+function openDayModal(dateStr, monthData){
+  dayEditing = dateStr;
+  var y = parseInt(dateStr.slice(0,4),10), m = parseInt(dateStr.slice(5,7),10), d = parseInt(dateStr.slice(8,10),10);
+  $('dayTitle').textContent = m + '月' + d + '日 · ' + weekDayName(y, m, d);
+  var rec = monthData.days[dateStr] || null;
+  var meals = (rec && rec.meals) ? rec.meals : defaultMeals(dateStr);
+  var foods = (rec && rec.foods) ? rec.foods : { breakfast:'', lunch:'', dinner:'' };
+  ['breakfast','lunch','dinner'].forEach(function(meal){
+    var K = MEAL_KEY[meal];
+    var on = meals[meal];
+    $('tg' + K).classList.toggle('on', !!on);
+    $('inp' + K).value = foods[meal] || '';
+    $('sub' + K).textContent = on ? '准备' : '未安排';
+  });
+  renderNotes(rec);
+  openModal('modalDay');
+}
+
+function fmtTime(){
+  var d = new Date();
+  return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+function getNick(){ return getStore('cc_nick') || '我'; }
+
+function renderNotes(rec){
+  var list = $('noteList');
+  var notes = (rec && rec.notes) ? rec.notes : [];
+  if(!notes.length){
+    list.innerHTML = '<div class="note-empty">还没有留言，说点什么吧</div>';
+    return;
+  }
+  list.innerHTML = notes.map(function(n, i){
+    return '<div class="note-item">' +
+      '<div class="note-meta">' + escapeHtml(n.who) + ' · ' + escapeHtml(n.t) + '</div>' +
+      '<div class="note-text">' + escapeHtml(n.text) + '</div>' +
+      '<button class="note-del" data-i="' + i + '">×</button>' +
+    '</div>';
+  }).join('');
+  list.querySelectorAll('.note-del').forEach(function(btn){
+    btn.onclick = function(){
+      var idx = parseInt(btn.getAttribute('data-i'),10);
+      var rec = session.monthData.days[dayEditing];
+      if(!rec || !rec.notes) return;
+      rec.notes.splice(idx, 1);
+      if(!rec.notes.length) delete rec.notes;
+      session.monthData.days[dayEditing] = rec;
+      renderNotes(rec);
+      saveMonth(session.month, session.monthData).then(function(ok){
+        renderCalendar(session.monthData);
+        if(ok) showToast('留言已删除');
+      });
+    };
+  });
+}
+
+$('noteSend').onclick = async function(){
+  var text = $('noteInput').value.trim();
+  if(!text){ return; }
+  var rec = session.monthData.days[dayEditing] || { meals: defaultMeals(dayEditing), foods:{breakfast:'',lunch:'',dinner:''} };
+  if(!rec.notes) rec.notes = [];
+  rec.notes.push({ who: getNick(), text: text, t: fmtTime() });
+  session.monthData.days[dayEditing] = rec;
+  $('noteInput').value = '';
+  renderNotes(rec);
+  var ok = await saveMonth(session.month, session.monthData);
+  renderCalendar(session.monthData);
+  if(ok) showToast('留言已同步');
+};
+$('noteInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('noteSend').click(); });
+
+['B','L','D'].forEach(function(k){
+  var tg = $('tg' + k);
+  tg.onclick = function(){
+    tg.classList.toggle('on');
+    var meal = tg.getAttribute('data-meal');
+    var sub = $('sub' + k);
+    sub.textContent = tg.classList.contains('on') ? '准备' : '未安排';
+  };
+});
+
+$('daySave').onclick = async function(){
+  var rec = session.monthData.days[dayEditing] || { meals: defaultMeals(dayEditing), foods:{breakfast:'',lunch:'',dinner:''} };
+  ['breakfast','lunch','dinner'].forEach(function(meal){
+    var K = MEAL_KEY[meal];
+    rec.meals[meal] = $('tg' + K).classList.contains('on');
+    rec.foods[meal] = $('inp' + K).value.trim();
+  });
+  var hasAny = rec.meals.breakfast || rec.meals.lunch || rec.meals.dinner ||
+    rec.foods.breakfast || rec.foods.lunch || rec.foods.dinner ||
+    (rec.notes && rec.notes.length > 0);
+  if(hasAny){
+    session.monthData.days[dayEditing] = rec;
+  } else {
+    delete session.monthData.days[dayEditing];
+  }
+  var ok = await saveMonth(session.month, session.monthData);
+  renderCalendar(session.monthData);
+  closeModal('modalDay');
+  if(ok) showToast('已保存并同步云端');
+};
+
+$('dayClose').onclick = function(){ closeModal('modalDay'); };
+$('modalDay').addEventListener('click', function(e){ if(e.target === this) closeModal('modalDay'); });
+
+/* ================= 云端同步 ================= */
+$('btnFiles').onclick = async function(){
+  var y = parseInt(session.month.slice(0,4),10), m = parseInt(session.month.slice(5,7),10);
+  $('filesNote').textContent = '三餐数据按月份加密后以独立文件存进云端仓库（当前 ' + y + ' 年 ' + m + ' 月），保存即更新文件。';
+  $('nickInput').value = getNick();
+  updateGhState();
+  openModal('modalFiles');
+  // 检查云端状态
+  var st = $('syncStatus');
+  if(!ghConfigured()){
+    st.textContent = '尚未配置云端仓库，数据暂时只存在本机';
+    return;
+  }
+  st.textContent = '检查云端…';
+  var pending = getPending();
+  if(pending.length){
+    st.textContent = '有 ' + pending.length + ' 项数据待同步，正在补传…';
+    await flushPending();
+    pending = getPending();
+  }
+  if(pending.length){
+    st.textContent = '仍有 ' + pending.length + ' 项数据在本地，请检查网络';
+    return;
+  }
+  try{
+    var f = await ghRead('data/' + session.month + '.json');
+    st.textContent = f ? '云端已存有本月文件 · 连接正常' : '本月云端暂无文件 · 保存后自动创建';
+  }catch(e){
+    st.textContent = '云端连接异常（' + (e.message || '网络错误') + '）';
+  }
+};
+$('filesClose').onclick = function(){ closeModal('modalFiles'); };
+$('modalFiles').addEventListener('click', function(e){ if(e.target === this) closeModal('modalFiles'); });
+
+/* ================= 云端仓库配置 ================= */
+function openGhModal(){
+  var cfg = ghConfig();
+  $('ghOwner').value = cfg.owner || '';
+  $('ghRepo').value = cfg.repo || '';
+  $('ghBranch').value = cfg.branch || 'main';
+  $('ghToken').value = cfg.token || '';
+  $('ghErr').textContent = '';
+  openModal('modalGh');
+}
+$('btnGhSetup').onclick = openGhModal;
+$('btnGhOpen').onclick = openGhModal;
+$('ghClose').onclick = function(){ closeModal('modalGh'); };
+$('modalGh').addEventListener('click', function(e){ if(e.target === this) closeModal('modalGh'); });
+
+$('ghSave').onclick = async function(){
+  var owner = $('ghOwner').value.trim();
+  var repo = $('ghRepo').value.trim();
+  var branch = $('ghBranch').value.trim() || 'main';
+  var token = $('ghToken').value.trim();
+  var err = $('ghErr');
+  if(!owner || !repo || !token){ err.textContent = '请填写用户名、仓库名和令牌'; return; }
+  var btn = $('ghSave');
+  btn.textContent = '正在测试…';
+  btn.disabled = true;
+  try{
+    saveGhConfig({ owner: owner, repo: repo, branch: branch, token: token });
+    // 测试：读取 vault 文件（不存在会返回 null，说明连接与权限正常）
+    await ghRead('data/vault.json');
+    err.style.color = '#5c7a56';
+    err.textContent = '连接成功！数据将写入 ' + owner + '/' + repo + ' 的 data/ 目录';
+    updateGhState();
+    // 如果本地已有密码库，立即补传
+    if(getStore(VAULT_KEY)){
+      syncVault();
+    }
+    // 重新从仓库拉取密码库，刷新锁屏模式（有云端密码则用原密码解锁）
+    await initLock();
+  }catch(e){
+    err.style.color = '#d97b55';
+    err.textContent = '连接失败：' + (e.message || '请检查信息');
+  }
+  btn.textContent = '保存并测试连接';
+  btn.disabled = false;
+};
+
+$('nickSave').onclick = function(){
+  var v = $('nickInput').value.trim();
+  if(!v){ showToast('请输入称呼'); return; }
+  setStore('cc_nick', v);
+  showToast('称呼已保存：' + v);
+};
+
+$('btnExport').onclick = async function(){
+  var data = await loadMonth(session.month);
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '三餐日历_' + session.month + '.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 300);
+  showToast('已导出 ' + session.month + ' 备份');
+};
+
+/* ================= 修改密码 ================= */
+$('btnPw').onclick = function(){
+  $('pwOld').value = ''; $('pwNew').value = ''; $('pwNew2').value = ''; $('pwErr').textContent = '';
+  openModal('modalPw');
+};
+$('pwClose').onclick = function(){ closeModal('modalPw'); };
+$('modalPw').addEventListener('click', function(e){ if(e.target === this) closeModal('modalPw'); });
+$('pwCancel').onclick = function(){ closeModal('modalPw'); };
+
+$('pwOk').onclick = async function(){
+  if(session.busy) return;
+  var oldP = $('pwOld').value, newP = $('pwNew').value, newP2 = $('pwNew2').value;
+  if(oldP !== session.password){ $('pwErr').textContent = '当前密码不对'; return; }
+  if(newP.length < 4){ $('pwErr').textContent = '新密码至少 4 位'; return; }
+  if(newP !== newP2){ $('pwErr').textContent = '两次新密码不一致'; return; }
+  session.busy = true;
+  try{
+    var vault = JSON.parse(getStore(VAULT_KEY));
+    var salt = cryptoObj.getRandomValues(new Uint8Array(16));
+    var passKey = await derivePassKey(newP, salt);
+    var wrapped = await wrapMaster(session.masterKey, passKey);
+    setStore(VAULT_KEY, JSON.stringify({ salt: b64(salt), wrapped: wrapped }));
+    syncVault();   // 新密码库同步到云端
+    session.password = newP;
+    closeModal('modalPw');
+    showToast('密码已更新');
+  }catch(e){
+    $('pwErr').textContent = '更新失败，请重试';
+  }
+  session.busy = false;
+};
+
+/* ================= 锁定 ================= */
+$('btnLockOut').onclick = function(){
+  musicPause();
+  session.masterKey = null;
+  session.password = '';
+  renderLockMode();
+  showView('lock');
+};
+
+/* ================= 背景音乐（合成钢琴） ================= */
+var Music = {
+  ctx: null, master: null, delay: null,
+  playing: false, muted: false, timer: null,
+  chordIdx: 0,
+  // I - V - vi - IV，C 大调温馨进行
+  chords: [
+    [261.63, 329.63, 392.00, 523.25],  // C
+    [246.94, 329.63, 392.00, 493.88],  // G/B
+    [220.00, 261.63, 329.63, 440.00],  // Am
+    [261.63, 329.63, 440.00, 523.25]   // F
+  ],
+  init: function(){
+    if(this.ctx) return;
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = this.muted ? 0 : 0.10;
+      this.master.connect(this.ctx.destination);
+      // 轻反馈延迟，营造空间感
+      this.delay = this.ctx.createDelay();
+      this.delay.delayTime.value = 0.42;
+      var fb = this.ctx.createGain();
+      fb.gain.value = 0.35;
+      var wet = this.ctx.createGain();
+      wet.gain.value = 0.35;
+      this.delay.connect(fb); fb.connect(this.delay);
+      this.delay.connect(wet); wet.connect(this.master);
+    }catch(e){ this.ctx = null; }
+  },
+  resume: function(){
+    if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  note: function(freq, t, dur, vol){
+    var ctx = this.ctx;
+    var o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g);
+    g.connect(this.master);
+    g.connect(this.delay);
+    o.start(t); o.stop(t + dur + 0.05);
+  },
+  step: function(){
+    if(!this.playing || !this.ctx) return;
+    var t = this.ctx.currentTime + 0.05;
+    var chord = this.chords[this.chordIdx % this.chords.length];
+    var base = chord[0] / 2;
+    // 低音 + 琶音
+    this.note(base, t, 3.2, 0.5);
+    this.note(chord[1], t + 0.0, 1.6, 0.28);
+    this.note(chord[2], t + 0.5, 1.5, 0.26);
+    this.note(chord[3], t + 1.0, 1.4, 0.24);
+    this.note(chord[2] * 2, t + 1.5, 1.3, 0.16);
+    this.chordIdx++;
+  },
+  start: function(){
+    this.init();
+    if(!this.ctx) return;
+    this.resume();
+    this.playing = true;
+    this.step();
+    this.timer = setInterval(this.step.bind(this), 3200);
+  },
+  stop: function(){
+    this.playing = false;
+    if(this.timer){ clearInterval(this.timer); this.timer = null; }
+  }
+};
+try{ Music.muted = getStore(MUTE_KEY) === '1'; }catch(e){}
+
+function musicResume(){
+  if(Music.muted) return;
+  if(!Music.playing) Music.start();
+  else Music.resume();
+}
+function musicPause(){ Music.stop(); }
+
+function renderMusicBtn(){
+  $('btnMusic').classList.toggle('muted', Music.muted);
+}
+$('btnMusic').onclick = function(){
+  Music.init();
+  if(Music.ctx) Music.resume();
+  Music.muted = !Music.muted;
+  setStore(MUTE_KEY, Music.muted ? '1' : '0');
+  if(Music.muted) Music.stop();
+  else Music.start();
+  renderMusicBtn();
+  if(!Music.muted) showToast('背景音乐已开启');
+};
+
+/* 页面切后台暂停音乐 */
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) Music.stop();
+  else if(!Music.muted && session.masterKey) musicResume();
+});
+
+/* ================= 关于 ================= */
+$('btnAbout').onclick = function(){ openModal('modalAbout'); };
+$('aboutClose').onclick = function(){ closeModal('modalAbout'); };
+$('modalAbout').addEventListener('click', function(e){ if(e.target === this) closeModal('modalAbout'); });
+
+/* ================= 启动 ================= */
+initLock();
+renderMusicBtn();
+showView('lock');
+$('lockInput').focus();
+</script>
+</body>
+</html>
